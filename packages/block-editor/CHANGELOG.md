@@ -15,6 +15,7 @@
 ### Bug Fixes
 
 -   Gate the HEIC canvas conversion fallback on `window.__clientSideMediaProcessing` instead of the redundant `window.__heicUploadSupport` flag, fixing client-side HEIC conversion in Safari on core WordPress installs ([#80452](https://github.com/WordPress/gutenberg/pull/80452)).
+-   `URLInput`: Skip link search requests while an IME composition is in progress; the search now fires once with the confirmed value on `compositionend` ([#80602](https://github.com/WordPress/gutenberg/pull/80602)).
 
 ## 16.0.0 (2026-07-14)
 
