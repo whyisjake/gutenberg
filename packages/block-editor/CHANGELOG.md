@@ -15,6 +15,7 @@
 ### Bug Fixes
 
 -   Gate the HEIC canvas conversion fallback on `window.__clientSideMediaProcessing` instead of the redundant `window.__heicUploadSupport` flag, fixing client-side HEIC conversion in Safari on core WordPress installs ([#80452](https://github.com/WordPress/gutenberg/pull/80452)).
+-   Block Settings Menu: The `Copy` and `Cut` items now write the same `text/plain` and `text/html` clipboard data as the keyboard shortcuts, so blocks copied from the menu paste as formatted content in rich text targets instead of raw block markup ([#80603](https://github.com/WordPress/gutenberg/pull/80603)).
 
 ## 16.0.0 (2026-07-14)
 
