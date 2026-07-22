@@ -50,6 +50,8 @@ class URLInput extends Component {
 		super( props );
 
 		this.onChange = this.onChange.bind( this );
+		this.onCompositionStart = this.onCompositionStart.bind( this );
+		this.onCompositionEnd = this.onCompositionEnd.bind( this );
 		this.onFocus = this.onFocus.bind( this );
 		this.onKeyDown = this.onKeyDown.bind( this );
 		this.selectLink = this.selectLink.bind( this );
@@ -66,6 +68,12 @@ class URLInput extends Component {
 		this.suggestionNodes = [];
 
 		this.suggestionsRequest = null;
+
+		// Whether characters are currently being composed with an IME.
+		// Composition state is tracked with explicit `compositionstart` and
+		// `compositionend` listeners because the `isComposing` property of
+		// native events is not reliable across browsers (e.g. Safari).
+		this.isComposing = false;
 
 		this.state = {
 			suggestions: [],
@@ -96,8 +104,15 @@ class URLInput extends Component {
 			} );
 		}
 
-		// Update suggestions when the value changes.
-		if ( prevProps.value !== value && ! this.props.disableSuggestions ) {
+		// Update suggestions when the value changes, unless characters are
+		// being composed with an IME: intermediate composition updates must
+		// not fire search requests. `onCompositionEnd` updates the
+		// suggestions once the composed value is confirmed.
+		if (
+			prevProps.value !== value &&
+			! this.props.disableSuggestions &&
+			! this.isComposing
+		) {
 			if ( value?.length ) {
 				// If the new value is not empty we need to update with suggestions for it.
 				this.updateSuggestions( value );
@@ -242,6 +257,34 @@ class URLInput extends Component {
 
 	onChange( newValue ) {
 		this.props.onChange( newValue );
+	}
+
+	onCompositionStart() {
+		this.isComposing = true;
+		// Cancel any debounced suggestions update scheduled before the
+		// composition started so no request fires while composing.
+		this.updateSuggestions.cancel();
+	}
+
+	onCompositionEnd( event ) {
+		this.isComposing = false;
+
+		if ( this.props.disableSuggestions ) {
+			return;
+		}
+
+		// Update the suggestions with the confirmed composition value,
+		// mirroring the update skipped in `componentDidUpdate`. Some
+		// browsers (e.g. Safari) emit a final `input` event after
+		// `compositionend`; the debounce coalesces the resulting
+		// `componentDidUpdate` update with this one.
+		const { value } = event.target;
+
+		if ( value?.length ) {
+			this.updateSuggestions( value );
+		} else if ( this.props.__experimentalShowInitialSuggestions ) {
+			this.updateSuggestions();
+		}
 	}
 
 	onFocus() {
@@ -462,6 +505,8 @@ class URLInput extends Component {
 			name: inputId,
 			autoComplete: 'off',
 			onChange: disabled ? () => {} : this.onChange, // Disable onChange when disabled
+			onCompositionStart: disabled ? () => {} : this.onCompositionStart,
+			onCompositionEnd: disabled ? () => {} : this.onCompositionEnd,
 			onFocus: disabled ? () => {} : this.onFocus, // Disable onFocus when disabled
 			placeholder,
 			onKeyDown: disabled ? () => {} : this.onKeyDown, // Disable onKeyDown when disabled
