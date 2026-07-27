@@ -28,7 +28,7 @@
 
 ### Internal
 
--   Update `@ariakit/react` to 0.4.35 and `@ariakit/test` to 0.7.2.
+-   Update `@ariakit/react` to 0.4.35 and `@ariakit/test` to 0.7.2 ([#80765](https://github.com/WordPress/gutenberg/pull/80765)).
 -   `TextControl`, `ComboboxControl`, `FormTokenField`, `ContentEditableControl`: Replace `--wp-components-color-accent` with `--wp-admin-theme-color` for focus ring color ([#80595](https://github.com/WordPress/gutenberg/pull/80595)).
 -   `ConfirmDialog`: Migrate styles from Emotion to an SCSS Module ([#80394](https://github.com/WordPress/gutenberg/pull/80394)).
 -   `ExternalLink`: Use the shared `outset-ring__focus` mixin for the focus ring ([#80573](https://github.com/WordPress/gutenberg/pull/80573)).
