@@ -33,6 +33,7 @@ Read only what your task needs, when it needs it:
 
 -   **Contributor docs**: before starting a task, check `docs/contributors/code/` for the guide covering that kind of work (coding guidelines, backward compatibility, workspaces, releases) and read the relevant one.
 -   **Task procedures (skills)**: before starting a matching task, read the relevant `skills/<domain>/SKILL.md` (e.g. `skills/testing/SKILL.md` for writing, running, or debugging tests).
+-   **Design System work**: for UI/UX implementation or review, read `skills/design-system-ui-composition/SKILL.md` or `skills/design-system-ui-review/SKILL.md`; for `packages/components`, `packages/ui`, or `packages/theme` implementation or review, read `skills/design-system-contribution/SKILL.md` or `skills/design-system-code-review/SKILL.md`.
 -   **Directory guides**: some directories carry their own `AGENTS.md` and `README.md` with rules for working there (e.g. `packages/components/AGENTS.md`) — read it before changing files in that directory.
 
 ## Code quality
