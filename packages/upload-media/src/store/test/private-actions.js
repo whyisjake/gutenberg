@@ -458,6 +458,7 @@ describe( 'private actions', () => {
 			// an Error instance, so reject with one here to mirror that.
 			const restError = { code: 'rest_error', message: 'Server error' };
 			const mediaFinalize = jest.fn().mockRejectedValue( restError );
+			const mediaDelete = jest.fn().mockResolvedValue( undefined );
 			const finishOperation = jest.fn();
 			const cancelItem = jest.fn();
 			const warnSpy = jest
@@ -472,7 +473,7 @@ describe( 'private actions', () => {
 					attachment: { id: 42 },
 					subSizes: mockSubSizes,
 				} ),
-				getSettings: () => ( { mediaFinalize } ),
+				getSettings: () => ( { mediaFinalize, mediaDelete } ),
 			};
 			const dispatch = { finishOperation, cancelItem };
 
@@ -484,12 +485,55 @@ describe( 'private actions', () => {
 				'Media finalization failed:',
 				restError
 			);
+			// The already-uploaded attachment is deleted so it does not
+			// linger unfinalized in the media library.
+			expect( mediaDelete ).toHaveBeenCalledWith( 42 );
 			expect( finishOperation ).not.toHaveBeenCalled();
 			expect( cancelItem ).toHaveBeenCalledWith(
 				'test-id',
 				expect.objectContaining( {
 					code: ErrorCode.MEDIA_FINALIZE_ERROR,
 					file,
+				} )
+			);
+			warnSpy.mockRestore();
+		} );
+
+		it( 'should still cancel the item when the cleanup delete fails', async () => {
+			// The orphan-cleanup delete is best-effort; if it rejects, the
+			// item must still be cancelled rather than left half-finished.
+			const mediaFinalize = jest
+				.fn()
+				.mockRejectedValue( { code: 'rest_error' } );
+			const mediaDelete = jest
+				.fn()
+				.mockRejectedValue( new Error( 'Delete failed' ) );
+			const finishOperation = jest.fn();
+			const cancelItem = jest.fn();
+			const warnSpy = jest
+				.spyOn( console, 'warn' )
+				.mockImplementation( () => {} );
+			const select = {
+				getItem: () => ( {
+					file: new File( [ 'foo' ], 'foo.jpg', {
+						type: 'image/jpeg',
+					} ),
+					attachment: { id: 42 },
+					subSizes: mockSubSizes,
+				} ),
+				getSettings: () => ( { mediaFinalize, mediaDelete } ),
+			};
+			const dispatch = { finishOperation, cancelItem };
+
+			const thunk = finalizeItem( 'test-id' );
+			await thunk( { select, dispatch } );
+
+			expect( mediaDelete ).toHaveBeenCalledWith( 42 );
+			expect( finishOperation ).not.toHaveBeenCalled();
+			expect( cancelItem ).toHaveBeenCalledWith(
+				'test-id',
+				expect.objectContaining( {
+					code: ErrorCode.MEDIA_FINALIZE_ERROR,
 				} )
 			);
 			warnSpy.mockRestore();

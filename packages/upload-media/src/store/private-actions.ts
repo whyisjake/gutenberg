@@ -1908,7 +1908,7 @@ export function finalizeItem( id: QueueItemId ) {
 		}
 
 		const attachment = item.attachment;
-		const { mediaFinalize } = select.getSettings();
+		const { mediaFinalize, mediaDelete } = select.getSettings();
 		const updates: Partial< QueueItem > = {};
 
 		// Only finalize if we have an attachment ID and a mediaFinalize callback.
@@ -1934,6 +1934,16 @@ export function finalizeItem( id: QueueItemId ) {
 				// deliberately generic.
 				// eslint-disable-next-line no-console
 				console.warn( 'Media finalization failed:', error );
+
+				// The original file already uploaded, so a failed finalize
+				// leaves an unfinalized attachment on the server. Delete it
+				// so it doesn't linger in the media library, mirroring how a
+				// total sideload failure cleans up its orphaned parent in
+				// cancelItem. Best-effort: surface nothing to the user if the
+				// delete itself fails.
+				if ( attachment.id && mediaDelete ) {
+					mediaDelete( attachment.id ).catch( () => {} );
+				}
 
 				// Finalize is the server's commit point: it writes the
 				// attachment metadata (responsive sub-sizes and the final
