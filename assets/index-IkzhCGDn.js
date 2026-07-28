@@ -1,0 +1,8 @@
+import{E as e,r as n,j as r,c as t}from"./iframe-DUTkJot0.js";import{k as o}from"./emotion-react.browser.esm-BDWzZbMb.js";import{a as s,C as a}from"./config-values-DmpSvrwF.js";const i=o`
+	from {
+		transform: rotate(0deg);
+	}
+	to {
+		transform: rotate(360deg);
+	}
+ `,c=e("svg",{target:"ea4tfvq2"})("width:",s.spinnerSize,"px;height:",s.spinnerSize,"px;display:inline-block;margin:5px 11px 0;position:relative;color:",a.theme.accent,";overflow:visible;opacity:1;background-color:transparent;"),p={name:"9s4963",styles:"fill:transparent;stroke-width:1.5px"},m=e("circle",{target:"ea4tfvq1"})(p,";stroke:",a.gray[300],";"),f=e("path",{target:"ea4tfvq0"})(p,";stroke:currentColor;stroke-linecap:round;transform-origin:50% 50%;animation:1.4s linear infinite both ",i,";");const l=n.forwardRef(function UnforwardedSpinner({className:e,...n},o){return r.jsxs(c,{className:t("components-spinner",e),viewBox:"0 0 100 100",width:"16",height:"16",xmlns:"http://www.w3.org/2000/svg",role:"presentation",focusable:"false",...n,ref:o,children:[r.jsx(m,{cx:"50",cy:"50",r:"50",vectorEffect:"non-scaling-stroke"}),r.jsx(f,{d:"m 50 0 a 50 50 0 0 1 50 50",vectorEffect:"non-scaling-stroke"})]})});l.displayName="Spinner";try{l.__docgenInfo={description:"`Spinner` is a component used to notify users that their action is being processed.\n\n```jsx\nimport { Spinner } from '@wordpress/components';\n\nfunction Example() {\n\treturn <Spinner />;\n}\n```",displayName:"Spinner",filePath:"/home/runner/work/gutenberg/gutenberg/packages/components/src/spinner/index.tsx",methods:[],props:{},tags:{}}}catch(g){}export{l as S};
