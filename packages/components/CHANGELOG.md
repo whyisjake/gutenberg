@@ -29,6 +29,7 @@
 
 ### Internal
 
+-   Update `react-day-picker` to 9.14.0 ([#80792](https://github.com/WordPress/gutenberg/pull/80792)).
 -   Update `date-fns` to 4.4.0 ([#80763](https://github.com/WordPress/gutenberg/pull/80763)).
 -   `TextControl`, `ComboboxControl`, `FormTokenField`, `ContentEditableControl`: Replace `--wp-components-color-accent` with `--wp-admin-theme-color` for focus ring color ([#80595](https://github.com/WordPress/gutenberg/pull/80595)).
 -   `ConfirmDialog`: Migrate styles from Emotion to an SCSS Module ([#80394](https://github.com/WordPress/gutenberg/pull/80394)).
