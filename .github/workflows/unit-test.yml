@@ -14,9 +14,11 @@ on:
 
 # Cancels all previous workflow runs for pull requests that have not completed.
 concurrency:
-    # The concurrency group contains the workflow name and the branch name for pull requests
-    # or the commit hash for any other events.
-    group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.head_ref || github.sha }}
+    # The concurrency group contains the workflow name and the branch name for pull requests,
+    # the full ref for pushes to wp/** release branches (debounced to the branch tip), or the
+    # commit hash for any other events. github.ref, not github.ref_name: the refs/heads/ prefix
+    # keeps pushes from sharing a group with a PR opened from a like-named branch.
+    group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.head_ref || github.event_name == 'push' && startsWith(github.ref, 'refs/heads/wp/') && github.ref || github.sha }}
     cancel-in-progress: true
 
 # Disable permissions for all available scopes by default.
