@@ -3,14 +3,13 @@
  */
 import {
 	BlockControls,
-	BlockIcon,
 	InspectorControls,
 	store as blockEditorStore,
 	useBlockProps,
 } from '@wordpress/block-editor';
 import { createBlock } from '@wordpress/blocks';
 import {
-	Placeholder,
+	Spinner,
 	ToggleControl,
 	SelectControl,
 	ToolbarButton,
@@ -19,12 +18,12 @@ import {
 	__experimentalToolsPanelItem as ToolsPanelItem,
 } from '@wordpress/components';
 import { useDispatch, useSelect } from '@wordpress/data';
-import { renderToString } from '@wordpress/element';
-import { __, isRTL } from '@wordpress/i18n';
-import { useInstanceId } from '@wordpress/compose';
-import { store as noticeStore } from '@wordpress/notices';
+import { store as coreStore } from '@wordpress/core-data';
+import { renderToString, useEffect, useState } from '@wordpress/element';
+import { __, isRTL, sprintf } from '@wordpress/i18n';
+import { useDisabled } from '@wordpress/compose';
+import { useServerSideRender } from '@wordpress/server-side-render';
 import {
-	tableOfContents as icon,
 	formatListBullets,
 	formatListBulletsRTL,
 	formatListNumbered,
@@ -38,6 +37,7 @@ import TableOfContentsList from './list';
 import { linearToNestedHeadingList } from './utils';
 import { useObserveHeadings } from './hooks';
 import { useToolsPanelDropdownMenuProps } from '../utils/hooks';
+import HtmlRenderer from '../utils/html-renderer';
 
 /** @typedef {import('./utils').HeadingData} HeadingData */
 
@@ -51,37 +51,56 @@ import { useToolsPanelDropdownMenuProps } from '../utils/hooks';
  * @param {number|undefined}             props.attributes.maxLevel               The maximum heading level to include, or null to include all levels.
  * @param {boolean}                      props.attributes.ordered                Whether to display as an ordered list (true) or unordered list (false).
  * @param {string}                       props.clientId                          The client id.
+ * @param {string}                       props.name                              The block name.
+ * @param {Object}                       props.context                           The block context.
+ * @param {number}                       props.context.postId                    The post ID.
+ * @param {string}                       props.context.postType                  The post type.
  * @param {(attributes: Object) => void} props.setAttributes                     The set attributes function.
  *
  * @return {Component} The component.
  */
-export default function TableOfContentsEdit( {
-	attributes: {
+export default function TableOfContentsEdit( props ) {
+	const {
+		attributes,
+		clientId,
+		name,
+		context: { postId, postType } = {},
+		setAttributes,
+	} = props;
+	const {
 		headings = [],
 		onlyIncludeCurrentPage,
 		maxLevel,
 		ordered = true,
-	},
-	clientId,
-	setAttributes,
-} ) {
+	} = attributes;
 	useObserveHeadings( clientId );
 
-	const blockProps = useBlockProps();
-	const instanceId = useInstanceId(
-		TableOfContentsEdit,
-		'table-of-contents'
-	);
+	const post = useSelect(
+		( select ) => {
+			if ( ! postId || ! postType ) {
+				return;
+			}
 
-	// If a user clicks to a link prevent redirection and show a warning.
-	const { createWarningNotice } = useDispatch( noticeStore );
-	const showRedirectionPreventedNotice = ( event ) => {
-		event.preventDefault();
-		createWarningNotice( __( 'Links are disabled in the editor.' ), {
-			id: `block-library/core/table-of-contents/redirection-prevented/${ instanceId }`,
-			type: 'snackbar',
-		} );
-	};
+			return select( coreStore ).getEntityRecord(
+				'postType',
+				postType,
+				postId
+			);
+		},
+		[ postId, postType ]
+	);
+	const [ invalidationKey, setInvalidationKey ] = useState( 0 );
+	useEffect( () => {
+		setInvalidationKey( ( value ) => value + 1 );
+	}, [ post ] );
+
+	const { content, status, error } = useServerSideRender( {
+		attributes,
+		block: name,
+		urlQueryArgs: { post_id: postId, invalidationKey },
+	} );
+	const disabledRef = useDisabled();
+	const blockProps = useBlockProps( { ref: disabledRef } );
 
 	const canInsertList = useSelect(
 		( select ) => {
@@ -221,41 +240,28 @@ export default function TableOfContentsEdit( {
 		</InspectorControls>
 	);
 
-	// If there are no headings or the only heading is empty.
-	// Note that the toolbar controls are intentionally omitted since the
-	// "Convert to static list" option is useless to the placeholder state.
-	if ( headings.length === 0 ) {
-		return (
-			<>
-				<div { ...blockProps }>
-					<Placeholder
-						icon={ <BlockIcon icon={ icon } /> }
-						label={ __( 'Table of Contents' ) }
-						instructions={ __(
-							'Start adding Heading blocks to create a table of contents. Headings with HTML anchors will be linked here.'
-						) }
-					/>
-				</div>
-				{ inspectorControls }
-			</>
-		);
-	}
-
-	const ListTag = ordered ? 'ol' : 'ul';
-
 	return (
 		<>
-			<nav { ...blockProps }>
-				<ListTag>
-					<TableOfContentsList
-						nestedHeadingList={ headingTree }
-						disableLinkActivation
-						onClick={ showRedirectionPreventedNotice }
-						ordered={ ordered }
-					/>
-				</ListTag>
-			</nav>
-			{ toolbarControls }
+			{ status === 'loading' && (
+				<div { ...blockProps }>
+					<Spinner />
+				</div>
+			) }
+			{ status === 'error' && (
+				<div { ...blockProps }>
+					<p>
+						{ sprintf(
+							/* translators: %s: error message returned when rendering the block. */
+							__( 'Error: %s' ),
+							error
+						) }
+					</p>
+				</div>
+			) }
+			{ status === 'success' && (
+				<HtmlRenderer wrapperProps={ blockProps } html={ content } />
+			) }
+			{ headings.length > 0 && toolbarControls }
 			{ inspectorControls }
 		</>
 	);
